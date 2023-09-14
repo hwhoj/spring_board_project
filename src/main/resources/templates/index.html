@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+</head>
+<body>
+    <button onclick="saveReq()">글작성</button>
+    <!--버튼 클릭하면 saveReq()함수가 호출됨-->
+    <button onclick="listReq()">글목록</button>
+</body>
+<script>
+    //자바스크립트 함수
+    //function saveReq() {}
+    //밑에랑 똑같은 의미
+
+    const saveReq = () => {
+        location.href = "/board/save"; //index가 떴을때 이주소를 요청함
+    }
+
+    const listReq = () => {
+        location.href = "/board/"; //목록주소를 요청
+    }
+</script>
+</html>
