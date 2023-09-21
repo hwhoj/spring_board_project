@@ -2,10 +2,13 @@ package com.codingrecipe.board.dto;
 
 
 import com.codingrecipe.board.entity.BoardEntity;
+import com.codingrecipe.board.entity.BoardFileEntity;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter //lombok이라는 라이브러리에서 자동으로 get, set 메소드를 만들어준다
 @Setter
@@ -24,9 +27,9 @@ public class BoardDTO {
     private LocalDateTime boardCreatedTime; //게시글 작성시간
     private LocalDateTime boardUpdatedTime; //게시글 수정시간
 
-    private MultipartFile boardFile; // save.html -> Controller 올때 파일을 담는 용도
-    private String originalFileName; // 원본 파일 이름
-    private String storedFileName; // 서버 저장용 파일 이름
+    private List<MultipartFile> boardFile; // save.html -> Controller 올때 파일을 담는 용도
+    private List<String> originalFileName; // 원본 파일 이름
+    private List<String> storedFileName; // 서버 저장용 파일 이름
     private int fileAttached; // 파일 첨부 여부 (첨부 1, 미첨부 0)
 
     public BoardDTO(Long id, String boardWriter, String boardTitle, int boardHits, LocalDateTime boardCreatedTime) {
@@ -47,6 +50,24 @@ public class BoardDTO {
         boardDTO.setBoardHits(boardEntity.getBoardHits());
         boardDTO.setBoardCreatedTime(boardEntity.getCreatedTime());
         boardDTO.setBoardUpdatedTime(boardEntity.getUpdatedTime());
+        if (boardEntity.getFileAttached() == 0){
+            boardDTO.setFileAttached(boardEntity.getFileAttached()); // 0
+        }else {
+            List<String> originalFileNameList = new ArrayList<>();
+            List<String> storedFileNameList = new ArrayList<>();
+            boardDTO.setFileAttached(boardEntity.getFileAttached()); // 1
+
+            for (BoardFileEntity boardFileEntity : boardEntity.getBoardFileEntityList()) {
+                // 파일 이름을 가져가야함
+                // originalFileName, storedFileName : board_file_table(BoardFileEntity)에 들어있음
+                // join > select * from board_table b, board_file_table bf where b.id=bf.board_id and where b.id=?
+                originalFileNameList.add(boardFileEntity.getOriginalFileName());
+                storedFileNameList.add(boardFileEntity.getStoredFileName());
+            }
+            boardDTO.setOriginalFileName(originalFileNameList);
+            boardDTO.setStoredFileName(storedFileNameList);
+
+        }
 
         return boardDTO;
     }

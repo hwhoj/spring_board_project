@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -26,7 +27,7 @@ public class BoardController {
     }
 
     @PostMapping("/save") //save.html에서 post요청이 들어올때 실행됨
-    public String save(@ModelAttribute BoardDTO boardDTO){
+    public String save(@ModelAttribute BoardDTO boardDTO) throws IOException {
         //@ModelAttribute 어노테이션에 의해 BoardDTO 클래스 객체를 찾아서
         //save.html에서 받아온 name과 BoardDTO의 변수의 필드값이 같다면 필드에대한 setter를 알아서 호출하면서
         //save.html에서 담겨진 값들을 Setter 메소드로 각각 담아준다. 간단하게 입력값을 가져올수 있다.

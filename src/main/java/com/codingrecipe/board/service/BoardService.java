@@ -2,6 +2,8 @@ package com.codingrecipe.board.service;
 
 import com.codingrecipe.board.dto.BoardDTO;
 import com.codingrecipe.board.entity.BoardEntity;
+import com.codingrecipe.board.entity.BoardFileEntity;
+import com.codingrecipe.board.repository.BoardFileRepository;
 import com.codingrecipe.board.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,7 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,12 +31,48 @@ import java.util.Optional;
 public class BoardService {
 
     private final BoardRepository boardRepository; //생성자 주입방식으로 의존성을 주입받는다
-    public void save(BoardDTO boardDTO) {
+    private final BoardFileRepository boardFileRepository;
+    public void save(BoardDTO boardDTO) throws IOException {
 
-        BoardEntity boardEntity = BoardEntity.toSaveEntity(boardDTO);
-        boardRepository.save(boardEntity);
+        //파일 첨부 여부에 따라 로직 분리
+        if (boardDTO.getBoardFile().isEmpty()){
+            // 첨부 파일이 없는 경우
+            BoardEntity boardEntity = BoardEntity.toSaveEntity(boardDTO);
+            boardRepository.save(boardEntity);
+        } else {
+            // 첨부 파일이 있는 경우
+            /*
+                1. DTO에 있는 파일을 꺼냄
+                2. 파일의 이름을 가져옴
+                3. 서버 저장용 이름을 만든다 -> ex)6546435346_내사진.jpg
+                4. 저장 경로 설정
+                5. 해당 경로에 파일 저장
+                6. board_table에 해당 데이터 save 처리
+                7. board_file_table에 해당 데이터 save 처리
+            */
+            BoardEntity boardEntity = BoardEntity.toSaveFileEntity(boardDTO);
+            Long savedId = boardRepository.save(boardEntity).getId();
+            BoardEntity board = boardRepository.findById(savedId).get();
+
+            for (MultipartFile boardFile : boardDTO.getBoardFile()) {
+
+                // 필요없어짐 MultipartFile boardFile = boardDTO.getBoardFile(); // 1
+                String originalFilename = boardFile.getOriginalFilename(); // 2
+                String storedFileName = System.currentTimeMillis() + "_" + originalFilename; // 3
+                String savePath = "C:/springboot_img/" + storedFileName; // 4 ex) C:/springboot_img/73083457834_내사진.jpg
+                //mac인 경우 String savePath = "users/사용자이름/springboot_img/" + storedFileName;
+                boardFile.transferTo(new File(savePath)); // 5
+
+                BoardFileEntity boardFileEntity = BoardFileEntity.toBoardFileEntity(board, originalFilename, storedFileName);
+                //BoardFileEntity로 변환하기위한 작업
+                boardFileRepository.save(boardFileEntity);
+            }
+
+        }
+
     }
 
+    @Transactional
     public List<BoardDTO> findAll() {
         List<BoardEntity> boardEntityList = boardRepository.findAll();
         //repositoy로 가져올때는 무조건 entity로 온다
@@ -52,6 +93,7 @@ public class BoardService {
         boardRepository.updateHits(id);
     }
 
+    @Transactional
     public BoardDTO findById(Long id) {
         Optional<BoardEntity> optionalBoardEntity = boardRepository.findById(id);
         if (optionalBoardEntity.isPresent()){
