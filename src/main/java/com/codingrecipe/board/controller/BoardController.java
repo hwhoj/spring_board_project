@@ -1,7 +1,9 @@
 package com.codingrecipe.board.controller;
 
 import com.codingrecipe.board.dto.BoardDTO;
+import com.codingrecipe.board.dto.CommentDTO;
 import com.codingrecipe.board.service.BoardService;
+import com.codingrecipe.board.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +23,8 @@ import java.util.List;
 public class BoardController {
 
     private final BoardService boardService; //생성자 주입방식으로 의존성을 주입받는다
+    private final CommentService commentService;
+
     @GetMapping("/save") //요청하는 방식은 버튼이됐든 링크가 됐든 Get으로 받아온다
     public String saveForm(){
         return "save";
@@ -65,6 +69,10 @@ public class BoardController {
         boardService.updateHits(id);
         BoardDTO boardDTO = boardService.findById(id);
         //2번의 호출이 발생함
+
+        //댓글 목록가져오기
+        List<CommentDTO> commentDTOList = commentService.findAll(id);
+        model.addAttribute("commentList", commentDTOList);
 
         model.addAttribute("board", boardDTO);
         model.addAttribute("page", pageable.getPageNumber());
